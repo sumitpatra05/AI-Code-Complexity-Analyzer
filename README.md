@@ -1,5 +1,5 @@
 
-# 🚀 AI Code Complexity Analyzer
+# AI Code Complexity Analyzer
 
 ### Analyze. Understand. Optimize.
 
@@ -9,7 +9,7 @@ It helps developers understand how complex their code is, identify potential per
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Cyclomatic Complexity:** Measures the number of independent execution paths in the code.
 - **Cognitive Complexity:** Estimates how difficult the code is to understand.
@@ -24,7 +24,7 @@ It helps developers understand how complex their code is, identify potential per
 
 ---
 
-## 🛠️ Technologies Used
+## Technologies Used
 
 | Technology | Purpose |
 |---|---|
