@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Code Complexity Analyzer</title>
+
+<style>
+:root {
+    --bg:#f7f8fa;
+    --fg:#1c2330;
+    --muted:#5b6678;
+    --card:#fff;
+    --line:#d9dee7;
+    --accent:#2457c5;
+    --A:#1f8a4c;
+    --B:#6b9a1f;
+    --C:#c58a00;
+    --D:#d2600f;
+    --F:#c02b2b;
+}
+
+@media (prefers-color-scheme:dark) {
+    :root {
+        --bg:#141922;
+        --fg:#e7ebf2;
+        --muted:#9aa5b8;
+        --card:#1c2330;
+        --line:#2d3648;
+        --accent:#7aa2f7;
+    }
+}
+
+* {
+    box-sizing:border-box;
+}
+
+body {
+    margin:0;
+    font:16px/1.5 system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--fg);
+}
+
+main {
+    max-width:1000px;
+    margin:0 auto;
+    padding:24px 16px 60px;
+}
+
+h1 {
+    font-size:1.7rem;
+    margin:0 0 4px;
+}
+
+p.sub {
+    margin:0 0 16px;
+    color:var(--muted);
+}
+
+select {
+    padding:9px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--card);
+    color:var(--fg);
+    font:inherit;
+}
+
+textarea {
+    width:100%;
+    height:260px;
+    padding:12px;
+    font:14px/1.5 ui-monospace,Menlo,monospace;
+    background:var(--card);
+    color:var(--fg);
+    border:1px solid var(--line);
+    border-radius:8px;
+    resize:vertical;
+}
+
+.row {
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-wrap:wrap;
+    margin:12px 0;
+}
+
+button {
+    background:var(--accent);
+    color:#fff;
+    border:0;
+    padding:10px 18px;
+    border-radius:8px;
+    font:inherit;
+    cursor:pointer;
+}
+
+button:hover {
+    opacity:.9;
+}
+
+button:focus-visible,
+textarea:focus-visible {
+    outline:3px solid var(--accent);
+    outline-offset:2px;
+}
+
+button:disabled {
+    opacity:.6;
+    cursor:wait;
+}
+
+.stats {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:10px;
+    margin:16px 0;
+}
+
+.stat {
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:12px;
+}
+
+.stat b {
+    display:block;
+    font-size:1.4rem;
+}
+
+.stat span {
+    color:var(--muted);
+    font-size:.85rem;
+}
+
+.tablewrap {
+    overflow-x:auto;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--card);
+}
+
+table {
+    border-collapse:collapse;
+    width:100%;
+    font-size:.9rem;
+}
+
+th,td {
+    padding:9px 10px;
+    text-align:left;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+}
+
+.g {
+    display:inline-block;
+    min-width:1.6em;
+    text-align:center;
+    color:#fff;
+    border-radius:4px;
+    font-weight:700;
+    padding:1px 5px;
+}
+
+.g.A {background:var(--A)}
+.g.B {background:var(--B)}
+.g.C {background:var(--C)}
+.g.D {background:var(--D)}
+.g.F {background:var(--F)}
+
+h2 {
+    font-size:1.15rem;
+    margin:24px 0 10px;
+}
+
+.err {
+    color:var(--F);
+    font-weight:600;
+}
+
+/* Professional AI Review */
+
+.ai {
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:18px;
+    line-height:1.7;
+    overflow-wrap:anywhere;
+    font-family:system-ui,sans-serif;
+}
+
+.ai h1,
+.ai h2,
+.ai h3 {
+    color:var(--accent);
+    margin:16px 0 8px;
+}
+
+.ai h1 {font-size:1.4rem}
+.ai h2 {font-size:1.2rem}
+.ai h3 {font-size:1.05rem}
+
+.ai p {
+    margin:8px 0;
+}
+
+.ai ul,
+.ai ol {
+    padding-left:25px;
+    margin:10px 0;
+}
+
+.ai li {
+    margin-bottom:7px;
+}
+
+.ai strong {
+    color:var(--accent);
+}
+
+.ai code {
+    background:var(--bg);
+    padding:2px 5px;
+    border-radius:4px;
+    font-family:monospace;
+}
+
+.ai pre {
+    background:var(--bg);
+    padding:12px;
+    border-radius:8px;
+    overflow-x:auto;
+    white-space:pre-wrap;
+}
+
+.ai blockquote {
+    border-left:3px solid var(--accent);
+    padding-left:12px;
+    margin:12px 0;
+    color:var(--muted);
+}
+
+@media(max-width:600px) {
+    main {
+        padding:18px 12px 40px;
+    }
+
+    h1 {
+        font-size:1.4rem;
+    }
+
+    .ai {
+        padding:13px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<main>
+
+<h1>AI Code Complexity Analyzer</h1>
+
+<p class="sub">
+Analyze Python, Java, or C code for complexity,
+maintainability, and refactoring suggestions.
+</p>
+
+<div class="row">
+    <label for="language">Language:</label>
+
+    <select id="language">
+        <option value="python">Python</option>
+        <option value="java">Java</option>
+        <option value="c">C</option>
+    </select>
+</div>
+
+<textarea
+    id="code"
+    aria-label="Source code"
+    spellcheck="false"
+></textarea>
+
+<div class="row">
+
+    <button id="go">Analyze code</button>
+
+    <label>
+        <input type="checkbox" id="ai">
+        Include AI review
+    </label>
+
+    <span id="msg" role="status"></span>
+
+</div>
+
+<div id="out"></div>
+
+</main>
+
+<script>
+
+const $ = id => document.getElementById(id);
+
+/* Example Programs */
+
+const examples = {
+
+python: `def find_pairs(nums, target):
+    result = []
+    for i in range(len(nums)):
+        for j in range(len(nums)):
+            if i != j and nums[i] + nums[j] == target:
+                result.append((i, j))
+    return result
+
+def fib(n):
+    if n < 2: return n
+    return fib(n - 1) + fib(n - 2)`,
+
+java: `public static int findMax(int[] a) {
+    int max = a[0];
+
+    for (int i = 1; i < a.length; i++) {
+        if (a[i] > max) max = a[i];
+    }
+
+    return max;
+}`,
+
+c: `int findMax(int a[], int n) {
+    int max = a[0];
+
+    for (int i = 1; i < n; i++) {
+        if (a[i] > max) max = a[i];
+    }
+
+    return max;
+}`
+
+};
+
+/* Language Selection */
+
+$('language').onchange = () => {
+    $('code').value = examples[$('language').value];
+};
+
+$('code').value = examples.python;
+
+/* HTML Escaping */
+
+const esc = s =>
+    String(s).replace(/[&<>"']/g, c => ({
+        '&':'&amp;',
+        '<':'&lt;',
+        '>':'&gt;',
+        '"':'&quot;',
+        "'":'&#39;'
+    }[c]));
+
+/* Markdown Renderer */
+
+function renderMarkdown(text) {
+
+    const lines = esc(text)
+        .replace(/\r/g, '')
+        .split('\n');
+
+    let html = '';
+    let listType = null;
+    let inCode = false;
+    let codeLines = [];
+
+    function closeList() {
+        if (listType) {
+            html += `</${listType}>`;
+            listType = null;
+        }
+    }
+
+    function inlineFormat(s) {
+
+        return s
+            .replace(/`([^`]+)`/g, '<code>$1</code>')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+    }
+
+    for (const line of lines) {
+
+        const trimmed = line.trim();
+
+        if (trimmed.startsWith('```')) {
+
+            closeList();
+
+            if (!inCode) {
+                inCode = true;
+                codeLines = [];
+            } else {
+                html += `<pre><code>${codeLines.join('\n')}</code></pre>`;
+                inCode = false;
+            }
+
+            continue;
+        }
+
+        if (inCode) {
+            codeLines.push(line);
+            continue;
+        }
+
+        if (!trimmed) {
+            closeList();
+            continue;
+        }
+
+        const heading = trimmed.match(/^(#{1,3})\s+(.+)$/);
+
+        if (heading) {
+
+            closeList();
+
+            const level = heading[1].length;
+
+            html += `<h${level}>${inlineFormat(heading[2])}</h${level}>`;
+
+            continue;
+        }
+
+        const bullet = trimmed.match(/^[-*]\s+(.+)$/);
+
+        const numbered = trimmed.match(/^\d+[.)]\s+(.+)$/);
+
+        if (bullet || numbered) {
+
+            const type = bullet ? 'ul' : 'ol';
+
+            if (listType !== type) {
+
+                closeList();
+
+                listType = type;
+
+                html += `<${type}>`;
+            }
+
+            html += `<li>${inlineFormat((bullet || numbered)[1])}</li>`;
+
+            continue;
+        }
+
+        if (trimmed.startsWith('>')) {
+
+            closeList();
+
+            html += `<blockquote>${inlineFormat(trimmed.slice(1).trim())}</blockquote>`;
+
+            continue;
+        }
+
+        closeList();
+
+        html += `<p>${inlineFormat(trimmed)}</p>`;
+    }
+
+    if (inCode) {
+        html += `<pre><code>${codeLines.join('\n')}</code></pre>`;
+    }
+
+    closeList();
+
+    return html;
+}
+
+/* Analyze Code */
+
+$('go').onclick = async () => {
+
+    $('go').disabled = true;
+
+    $('msg').textContent = 'Analyzing...';
+
+    $('msg').className = '';
+
+    $('out').innerHTML = '';
+
+    try {
+
+        const res = await fetch('/api/analyze', {
+
+            method:'POST',
+
+            headers:{
+                'Content-Type':'application/json'
+            },
+
+            body:JSON.stringify({
+
+                code:$('code').value,
+
+                language:$('language').value,
+
+                ai:$('ai').checked
+
+            })
+
+        });
+
+        const d = await res.json();
+
+        if (!res.ok) {
+
+            $('msg').textContent = d.error || 'Analysis failed.';
+
+            $('msg').className = 'err';
+
+            return;
+        }
+
+        $('msg').textContent = '';
+
+        const s = d.summary;
+
+        let h = '<div class="stats">';
+
+        const stats = [
+
+            ['Language', s.language || $('language').value],
+
+            ['Complexity grade',
+                s.overall_grade === 'N/A'
+                ? 'N/A'
+                : `<span class="g ${esc(s.overall_grade)}" style="padding:0 8px">${esc(s.overall_grade)}</span>`
+            ],
+
+            ['Lines of code', s.lines_of_code],
+
+            ['Functions', s.functions],
+
+            ['Avg cyclomatic', s.avg_cyclomatic],
+
+            ['Max cyclomatic', s.max_cyclomatic],
+
+            ['Cognitive total', s.total_cognitive],
+
+            ['Maintainability',
+                s.maintainability_index == null
+                ? 'Heuristic'
+                : esc(s.maintainability_index) + '/100'
+            ]
+
+        ];
+
+        h += stats.map(([label, value]) =>
+
+            `<div class="stat">
+                <b>${value}</b>
+                <span>${esc(label)}</span>
+            </div>`
+
+        ).join('');
+
+        h += '</div>';
+
+        if (s.analysis_note) {
+
+            h += `<p class="sub">${esc(s.analysis_note)}</p>`;
+
+        }
+
+        /* Function Table */
+
+        h += `
+        <h2>Functions</h2>
+
+        <div class="tablewrap">
+
+        <table>
+
+        <tr>
+            <th>Grade</th>
+            <th>Name</th>
+            <th>Line</th>
+            <th>LOC</th>
+            <th>Params</th>
+            <th>Cyclomatic</th>
+            <th>Cognitive</th>
+            <th>Nesting</th>
+            <th>Time estimate</th>
+            <th>Space estimate</th>
+        </tr>
+        `;
+
+        (d.functions || []).forEach(f => {
+
+            const grade = ['A','B','C','D','F'].includes(f.grade)
+                ? f.grade
+                : 'F';
+
+            h += `
+            <tr>
+
+                <td>
+                    <span class="g ${grade}">${grade}</span>
+                </td>
+
+                <td>${esc(f.name)}</td>
+
+                <td>${esc(f.line)}</td>
+
+                <td>${esc(f.loc)}</td>
+
+                <td>${esc(f.params)}</td>
+
+                <td>${esc(f.cyclomatic)}</td>
+
+                <td>${esc(f.cognitive)}</td>
+
+                <td>${esc(f.max_nesting)}</td>
+
+                <td>${esc(f.time_estimate)}</td>
+
+                <td>${esc(f.space_estimate || 'N/A')}</td>
+
+            </tr>
+            `;
+
+        });
+
+        h += '</table></div>';
+
+        /* Suggestions */
+
+        h += '<h2>Suggestions</h2><ul>';
+
+        (d.suggestions || []).forEach(x => {
+
+            h += `<li>${esc(x)}</li>`;
+
+        });
+
+        h += '</ul>';
+
+        /* Professional AI Review */
+
+        if (d.ai_review) {
+
+            h += `
+                <h2>AI Review</h2>
+
+                <div class="ai">
+                    ${renderMarkdown(d.ai_review)}
+                </div>
+            `;
+
+        }
+
+        $('out').innerHTML = h;
+
+    } catch (e) {
+
+        $('msg').textContent = 'Request failed: ' + e.message;
+
+        $('msg').className = 'err';
+
+    } finally {
+
+        $('go').disabled = false;
+
+    }
+
+};
+
+</script>
+
+</body>
+</html>
